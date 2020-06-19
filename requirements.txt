@@ -11,3 +11,5 @@ ipywidgets
 quandl
 xlrd
 plotly
+plotly-express
+voila
