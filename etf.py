@@ -57,6 +57,7 @@ def returns_heatmap(data, max_drawdowns, title, tickers, sortby='1-Day', reit='N
     df_perf = (df.T*100)
     if india=='No':
         df_perf.insert(loc=0, column='Tickers', value=list(tickers))
+        df_perf = df_perf.sort_values(by=sortby, ascending=False)
         
     #df_perf.insert(loc=1, column='Yields', value=list(yields.iloc[:,0].round(2).values))
     else:
