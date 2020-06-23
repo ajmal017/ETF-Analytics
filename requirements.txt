@@ -13,3 +13,4 @@ xlrd
 plotly
 plotly-express
 voila
+nsepy
