@@ -25,7 +25,7 @@ def drawdowns2020(data):
     drawdowns = (wealth_index - previous_peaks)/previous_peaks
     return drawdowns.min(axis=0)
 
-def returns_heatmap(data, max_drawdowns, title, tickers, sortby='1-Day', reit='No', currencies='No', alok_secs='No', fg_data='No', style='Yes'):
+def returns_heatmap(data, max_drawdowns, title, tickers, sortby='1-Day', reit='No', currencies='No', alok_secs='No', fg_data='No', india='No', style='Yes'):
     """
     
     """
@@ -34,7 +34,7 @@ def returns_heatmap(data, max_drawdowns, title, tickers, sortby='1-Day', reit='N
         df.index = ['1-Day', '1-Week', '1-Month', '3-Month', 'YTD', 'March-23 TD', '6-Month', '1-Year', 'Drawdowns']
         
     elif currencies=='Yes':
-        df = pd.DataFrame(data = (data.pct_change(1).iloc[-2,:],  data.pct_change(5).iloc[-2,:], data.pct_change(21).iloc[-2,:], data.pct_change(42).iloc[-2,:], data.pct_change(63).iloc[-2,:], data['2020':].iloc[-2,:]/data['2020':].iloc[0,:]-1, data['2020':].iloc[-2,:]/data['2020-03-23':].iloc[0,:]-1, data.pct_change(126).iloc[-2,:], data.pct_change(252).iloc[-2,:], max_drawdowns))
+        df = pd.DataFrame(data = (data.pct_change(1).iloc[-1,:],  data.pct_change(5).iloc[-1,:], data.pct_change(21).iloc[-1,:], data.pct_change(42).iloc[-1,:], data.pct_change(63).iloc[-1,:], data['2020':].iloc[-1,:]/data['2020':].iloc[0,:]-1, data['2020':].iloc[-1,:]/data['2020-03-23':].iloc[0,:]-1, data.pct_change(126).iloc[-1,:], data.pct_change(252).iloc[-1,:], max_drawdowns))
         df.index = ['1-Day', '1-Week', '1-Month', '2-Month', '3-Month', 'YTD', 'March-23 TD', '6-Month', '1-Year', 'Drawdowns']
         
     elif alok_secs=='Yes':
@@ -55,40 +55,46 @@ def returns_heatmap(data, max_drawdowns, title, tickers, sortby='1-Day', reit='N
         
         
     df_perf = (df.T*100)
-    df_perf.insert(loc=0, column='Tickers', value=list(tickers))
+    if india=='No':
+        df_perf.insert(loc=0, column='Tickers', value=list(tickers))
+        
     #df_perf.insert(loc=1, column='Yields', value=list(yields.iloc[:,0].round(2).values))
+    else:
+        df_perf = df_perf.sort_values(by=sortby, ascending=False)
     
-    df_perf = df_perf.sort_values(by=sortby, ascending=False)
     df_perf.index.name = title
     
-    if style=='Yes':
+    if style=='Yes' and india=='No':
         df_perf = df_perf.round(2).style.format('{0:,.2f}%', subset=list(df_perf.drop(['Tickers'], axis=1).columns))\
-                 .background_gradient(cmap='RdYlGn', subset=list(df_perf.drop(['Tickers'], axis=1).columns))\
+                 .background_gradient(cmap='RdYlGn', subset=(df_perf.drop(['Tickers'], axis=1).columns))\
                  .set_properties(**{'font-size': '10pt',})
     
+    elif style=='Yes' and india=='Yes':
+        df_perf = df_perf.round(2).style.format('{0:,.2f}%')\
+                 .background_gradient(cmap='RdYlGn')\
+                 .set_properties(**{'font-size': '10pt',})
+        
     else:
         df_perf = df_perf.round(2)
+    
     return df_perf
 
 
-def returns_heatmap_eq(data, max_drawdowns, title, tickers, sortby='1-Day', style='Yes'):
+def returns_heatmap_alok(data, max_drawdowns, title, sortby='1-Day', style='Yes'):
     """
     
     """
-    df = pd.DataFrame(data = (data.pct_change(1).iloc[-2,:],  data.pct_change(5).iloc[-2,:], data.pct_change(21).iloc[-2,:], data.pct_change(42).iloc[-2,:], data.pct_change(63).iloc[-2,:], data['2020':].iloc[-2,:]/data['2020':].iloc[0,:]-1, data['2020':].iloc[-2,:]/data['2020-03-23':].iloc[0,:]-1, data.pct_change(126).iloc[-2,:], data.pct_change(252).iloc[-2,:], max_drawdowns))
-
-    df.index = ['1-Day', '1-Week', '1-Month', '2-Month', '3-Month', 'YTD', 'March-23 TD', '6-Month', '1-Year', 'Drawdowns']
+    data = data.ffill()
+    df = pd.DataFrame(data = (data.pct_change(1).iloc[-1,:],  data.pct_change(5).iloc[-1,:], data.pct_change(21).iloc[-1,:], data.pct_change(42).iloc[-1,:], data.pct_change(63).iloc[-1,:], data['2020':].iloc[-1,:]/data['2020-01-06':].iloc[0,:]-1, data['2020':].iloc[-1,:]/data['2020-03-23':].iloc[0,:]-1, max_drawdowns))
+    df.index = ['1-Day', '1-Week', '1-Month', '2-Month', '3-Month', 'YTD', 'March-23 TD', 'Drawdowns']
 
     df_perf = (df.T*100)
-    df_perf.insert(loc=0, column='Tickers', value=list(tickers))
-        #df_perf.insert(loc=1, column='Yields', value=list(yields.iloc[:,0].round(2).values))
-
     df_perf = df_perf.sort_values(by=sortby, ascending=False)
     df_perf.index.name = title
 
     if style=='Yes':
-        df_perf = df_perf.round(2).style.format('{0:,.2f}%', subset=list(df_perf.drop(['Tickers'], axis=1).columns))\
-                     .background_gradient(cmap='RdYlGn', subset=list(df_perf.drop(['Tickers'], axis=1).columns))\
+        df_perf = df_perf.round(2).style.format('{0:,.2f}%')\
+                     .background_gradient(cmap='RdYlGn')\
                      .set_properties(**{'font-size': '10pt',})
 
     else:
@@ -99,21 +105,18 @@ def returns_heatmap_eq(data, max_drawdowns, title, tickers, sortby='1-Day', styl
 
 def data_sov():
     #Soveriegn Fixed Income ETFs
-    data_sov = yf.download('SHY IEF TLT IEI EMB EMLC AGZ BWX IGOV TIP', progress=False)['Adj Close']
+    data_sov = yf.download('AGZ BWX EDV EMB EMLC GOVT HYD IEF IEI IGOV MUB PCY SHY SUB TFI TIP TLT TMF VWOB ZROZ', progress=False)['Adj Close']
     tickers = data_sov.columns
     data_sov.dropna(inplace=True)
-    data_sov.columns = ['iShares Agency Bond ETF', 'SPDR International Treasury Bond ETF', 'USD Emerging Markets Bond ETF', 'EM Local Currency Bond ETF', '7-10 Year Treasury Bond ETF','3-7 Year Treasury Bond ETF', 'iShares International Treasury Bond ETF','1-3 Year Treasury Bond ETF', 'US TIPS Bond ETF','20+ Year Treasury Bond ETF']
+    data_sov.columns = ["iShares Agency Bond ETF","SPDR  BBG Barclays International Treasury Bond ETF","Vanguard Extended Duration Treasury ETF","iShares JPM USD Emerging Markets Bond ETF","VanEck Vectors J.P. Morgan EM Local Currency Bond ETF","iShares U.S. Treasury Bond ETF","VanEck Vectors High-Yield Municipal Index ETF","iShares 7-10 Year Treasury Bond ETF","iShares 3-7 Year Treasury Bond ETF","iShares International Treasury Bond ETF","iShares National Muni Bond ETF","Invesco Emerging Markets Sovereign Debt ETF","iShares 1-3 Year Treasury Bond ETF","iShares Short-Term National Muni Bond ETF","SPDR Nuveen  BBG Barclays Municipal Bond ETF","iShares TIPS Bond ETF","iShares 20+ Year Treasury Bond ETF","Direxion Daily 20+ Year Treasury Bull 3X Shares","Vanguard Emerging Markets Government Bond ETF","PIMCO 25+ Year Zero Coupon US Treasury Index ETF"]
     return (data_sov,tickers)
 
 def data_corp():
     #Corporate Fixed Income ETFs -  IG & HY in Developed & EM
-    data_corp = yf.download('AGG BND BNDX LQD HYG SHYG JNK FALN ANGL FPE HYXE HYXU HYEM EMHY', progress=False)['Adj Close']
+    data_corp = yf.download('AGG ANGL BKLN BND BNDX CWB EMHY FALN FLOT FMB FPE HYEM HYG HYXE HYXU JNK LQD O9P.SI SHYG SRLN USIG VCIT VCLT VCSH', progress=False)['Adj Close']
     tickers = data_corp.columns
     data_corp.dropna(inplace=True)
-    data_corp.columns = ['Core US Aggregate Bond', 'ANGL Fallen Angel HY Bond', 'US Total Bond Market', 'Total International Bond', 
-                'iShares EM High Yield','FALN Fallen Angels USD Bond', 'Preferred Securities', 'VanEck EM High Yield',
-                'HYG US High Yield', 'US High Yield ex-Energy', 'Int High Yield', 'JNK US High Yield', 
-                'US Investment Grade', '0-5Y US High Yield']
+    data_corp.columns = ["iShares Core U.S. Aggregate Bond ETF","VanEck Vectors Fallen Angel High Yield Bond ETF","Invesco Senior Loan ETF","Vanguard Total Bond Market ETF","Vanguard Total International Bond ETF","SPDR BBG Barclays Convertible Securities ETF","iShares EM High Yield Bond ETF","iShares Fallen Angels USD Bond ETF","iShares Floating Rate Bond ETF","First Trust Managed Municipal ETF","First Trust Preferred Securities & Income ETF","VanEck Emerging Markets High Yield Bond ETF","iShares USD High Yield Corporate Bond ETF","iShares USD High Yield ex Oil & Gas Corporate Bond ETF","iShares International High Yield Bond ETF","SPDR BBG Barclays High Yield Bond ETF","iShares USD IG Corporate Bond ETF","iShares USD Asia High Yield Bond Index ETF ","iShares 0-5 Year High Yield Corporate Bond ETF","SPDR Blackstone / GSO Senior Loan ETF","iShares Broad USD Investment Grade Bond ETF","Vanguard Intermediate-Term Corporate Bond ETF","Vanguard Long-Term Corporate Bond ETF","Vanguard Short-Term Corporate Bond ETF"]
     return (data_corp, tickers)
 
 def data_reit(ticker='No'):
@@ -171,142 +174,6 @@ def data_equities():
     return (data_eq, tickers)
 
 
-def heatmap_fixed_income(days=1, Ticker='No', figsize=(12,6)):
-    data_sov1 = yf.download('SHY IEF TLT IEI EMB EMLC AGZ BWX IGOV TIP', progress=False)['Adj Close']
-    data_sov1.dropna(inplace=True)
-    data_corp1 = yf.download('AGG BND BNDX LQD HYG SHYG JNK FALN ANGL FPE HYXE HYXU HYEM EMHY')['Adj Close']
-    data_corp1.dropna(inplace=True)
-    sov_rets = pd.DataFrame(data_sov1.pct_change(days).iloc[-1,:])
-    corp_rets = pd.DataFrame(data_corp1.pct_change(days).iloc[-1,:])
-    rets = (sov_rets.append(corp_rets))
-    rets.columns = ['Return']
-    if Ticker == 'Yes':
-        rets.index = rets.index
-    else:
-        rets.index = ['Agency', 'Int-Govt', 'EM Govt', 'EM LCL', '7-10Y UST', '3-7Y UST', 'Int-Govt1', '1-3Y UST',
-              'US TIPS', '20Y+ UST', 'Agg Bonds', 'ANGL', 'Total Bonds', 'Int-Bonds', 'EM HY', 'FALN', 'Preferred',
-              'HY EM', 'HYG', 'HYXE', 'Int-HY', 'JNK', 'US IG', 'SHYG']
-    rets = rets.sort_values('Return', ascending=False)
-    symbols = (np.asarray(list(rets.index))).reshape(4,6)
-    pct_rets = (np.asarray(rets['Return'].values)).reshape(4,6)
-    rows = [1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4,4,4]
-    cols = [1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6]
-    rets['Rows'] = rows
-    rets['Cols'] = cols
-    result = rets.pivot(index = 'Rows', columns = 'Cols', values = 'Return')
-    labels = (np.asarray(["{0} \n {1:.2%}".format(symb,value)
-                     for symb, value in zip(symbols.flatten(), pct_rets.flatten())])).reshape(4,6)
-    fig, ax = plt.subplots(figsize=(12,6))
-    title = 'Fixed Income ETFs Heatmap'
-    plt.title(title, fontsize=15)
-    ttl = ax.title
-    ttl.set_position([0.5,1.05])
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('off')
-    sns.heatmap(result, annot=labels, fmt="", cmap = 'RdYlGn', linewidth=0.30, ax=ax, square=True, annot_kws={"size": 12})
-    plt.show()
-
-def heatmap_reit(days=1, Ticker='No', figsize=(12,6)):
-    reit = yf.download('VNQ VNQI SRVR INDS HOMZ REZ PPTY IFEU REM MORT SRET RFI FFR GQRE CHIR FFR WPS IFGL KBWY BBRE ROOF NETL SPG SRG SKT STOR', progress=False)['Adj Close']['2019':]
-    reit.dropna(inplace=True)
-    if Ticker == 'Yes':
-        reit.columns = reit.columns
-    else:
-        reit.columns = ['BetaBuilders', 'China RE', 'DM RE', 'Quality RE', 'ResidentialHOMZ', 'Europe RE', 'IGFL', 'Industrial RE',
-                     'YieldEQ RE', 'MORT','NetLease RE', 'Divserified RE', 'MortgageREM', 'ResidentialREZ', 'Cohen RE',
-                     'Small-Cap RE', 'TangerRetail', 'SimonRetail', 'SuperDividend', 'SeritageRetail', 'DataInfra RE',
-                     'StoreRetail', 'VanguardUS', 'VanguardInt', 'DevelopedRE']
-    rets = pd.DataFrame(reit.pct_change(days).iloc[-1,:])
-    rets.columns = ['Return']
-    rets = rets.sort_values('Return', ascending=False)
-    symbols = (np.asarray(list(rets.index))).reshape(5,5)
-    pct_rets = (np.asarray(rets['Return'].values)).reshape(5,5)
-    rows = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,5,5,5,5,5]
-    cols = [1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5]
-    rets['Rows'] = rows
-    rets['Cols'] = cols
-    result = rets.pivot(index = 'Rows', columns = 'Cols', values = 'Return')
-    labels = (np.asarray(["{0} \n {1:.2%}".format(symb,value)
-                     for symb, value in zip(symbols.flatten(), pct_rets.flatten())])).reshape(5,5)
-    fig, ax = plt.subplots(figsize=figsize)
-    title = 'REIT ETFs Heatmap'
-    plt.title(title, fontsize=15)
-    ttl = ax.title
-    ttl.set_position([0.5,1.05])
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('off')
-    sns.heatmap(result, annot=labels, fmt="", cmap = 'RdYlGn', linewidth=0.30, ax=ax, annot_kws={"size": 12})
-    plt.show()
-    
-
-def heatmap_commodities(days=1, Ticker='No', figsize=(12,6)):
-    comd = yf.download('COMT GSG DBC USO CL=F HG=F COPX GC=F GLD GDX PA=F PALL PPLT SI=F SIL ICLN TAN W=F ZC=F NG=F', progress=False)['Adj Close']
-    comd.dropna(inplace=True)
-    if Ticker == 'Yes':
-        comd.columns = comd.columns
-    else:
-        comd.columns = ['Crude Oil WTI', 'COMT', 'Copper Miners', 'DB CMTY Fund', 'Gold Futures', 'Gold Miners',
-                     'Gold ETF', 'GSCI ETF', 'Copper Futures', 'Clean Energy', 'NatGas Futures',
-                     'Palladium Futures', 'Physical Palladium ETF', 'Physical Platinum ETF', 'Silver Futures', 'Silver ETF', 
-                     'Solar ETF', 'USO Oil ETF', 'Wheat Futures', 'Corn Futures']
-    rets = pd.DataFrame(comd.pct_change(days).iloc[-1,:])
-    rets.columns = ['Return']
-    rets = rets.sort_values('Return', ascending=False)
-    symbols = (np.asarray(list(rets.index))).reshape(4,5)
-    pct_rets = (np.asarray(rets['Return'].values)).reshape(4,5)
-    rows = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4]
-    cols = [1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5]
-    rets['Rows'] = rows
-    rets['Cols'] = cols
-    result = rets.pivot(index = 'Rows', columns = 'Cols', values = 'Return')
-    labels = (np.asarray(["{0} \n {1:.2%}".format(symb,value)
-                     for symb, value in zip(symbols.flatten(), pct_rets.flatten())])).reshape(4,5)
-    fig, ax = plt.subplots(figsize=figsize)
-    title = 'Commodities ETF/Futures Heatmap'
-    plt.title(title, fontsize=15)
-    ttl = ax.title
-    ttl.set_position([0.5,1.05])
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('off')
-    sns.heatmap(result, annot=labels, fmt="", cmap = 'RdYlGn', linewidth=0.30, ax=ax, annot_kws={"size": 12})
-    plt.show()
-    
-def heatmap_fx(days=1, Ticker='No', figsize=(12,6)):
-    cur = yf.download('KRWUSD=X  BRLUSD=X  IDRUSD=X  MXNUSD=X  RUBUSD=X  CADUSD=X  JPYUSD=X  EURUSD=X  INRUSD=X  TRYUSD=X  NZDUSD=X  GBPUSD=X  DX-Y.NYB  AUDUSD=X  AUDJPY=X  EURCHF=X', progress=False)['Adj Close']['2017':]
-    cur.dropna(inplace=True)
-    if Ticker == 'Yes':
-        cur.columns = cur.columns
-    else:
-        cur.columns = ['Aussie Yen', 'Australian Dollar', 'Brazilian Real', 'Canadian Dollar', 'Dollar Index', 'EUR/CHF',
-                    'Euro', 'British Pound', 'Indonesian Rupiah', 'Indian Rupee', 'Japanese Yen', 'South Korean Won',
-                    'Mexican Peso', 'New Zealand Dollar', 'Russian Ruble', 'Turkish Lira']
-    
-    rets = pd.DataFrame(cur.pct_change(days).iloc[-1,:])
-    rets.columns = ['Return']
-    rets = rets.sort_values('Return', ascending=False)
-    symbols = (np.asarray(list(rets.index))).reshape(4,4)
-    pct_rets = (np.asarray(rets['Return'].values)).reshape(4,4)
-    rows = [1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4]
-    cols = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
-    rets['Rows'] = rows
-    rets['Cols'] = cols
-    result = rets.pivot(index = 'Rows', columns = 'Cols', values = 'Return')
-    labels = (np.asarray(["{0} \n {1:.2%}".format(symb,value)
-                     for symb, value in zip(symbols.flatten(), pct_rets.flatten())])).reshape(4,4)
-    fig, ax = plt.subplots(figsize=figsize)
-    title = 'REIT ETFs Heatmap'
-    plt.title(title, fontsize=15)
-    ttl = ax.title
-    ttl.set_position([0.5,1.05])
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('off')
-    sns.heatmap(result, annot=labels, fmt="", cmap = 'RdYlGn', linewidth=0.30, ax=ax, annot_kws={"size": 12})
-    plt.show()
-    
     
 def heatmap(rets, title='Cross Asset ETFs Heatmap', figsize=(15,10), annot_size=12, n_rows=10, n_cols=8):
     rets.columns = ['Return']
@@ -345,7 +212,7 @@ def alok_heatmap():
     alok_data1 = pd.DataFrame(data = (alok_data.iloc[-1,:],alok_data.pct_change().iloc[-1,:])).T
     alok_data1.columns = ['Price', 'Chg (%)']
     alok_data2 = alok_data1.style.format({'Chg (%)': "{:.2%}", 'Price': "{:.2f}"})
-    alok_map = returns_heatmap(alok_data, drawdowns2020(alok_data), title='Securities', alok_secs='Yes', style='No')
+    alok_map = returns_heatmap_alok(alok_data, drawdowns2020(alok_data), title='Securities', style='No')
     prices = pd.DataFrame(alok_data1['Price'])
     prices.index.name = 'Securities'
     final = prices.merge(alok_map, on='Securities').sort_values(by='1-Day', ascending=False).style.format('{0:,.2f}%', subset=list(alok_map.columns))\
