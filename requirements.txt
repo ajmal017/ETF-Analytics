@@ -15,5 +15,3 @@ plotly-express
 voila
 nsepy
 requests
-ipympl
-ipyvolume
