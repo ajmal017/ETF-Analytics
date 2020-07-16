@@ -219,7 +219,7 @@ def alok_heatmap():
     final = prices.merge(alok_map, on='Securities').sort_values(by='1-Day', ascending=False).style.format('{0:,.2f}%', subset=list(alok_map.columns))\
                      .format('{0:,.2f}', subset=['Price'])\
                      .background_gradient(cmap='RdYlGn', subset=list(alok_map.columns))\
-                     .set_properties(**{'font-size': '10pt',})
+                     .set_properties(**{'text-align':'left','font-family': 'Segoe UI','font-size': '10.5px'})
     return (final, alok_data1, alok_data)
     
 
