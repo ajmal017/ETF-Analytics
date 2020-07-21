@@ -19,7 +19,7 @@ import datetime
 from IPython.core.display import display, HTML
 
 def drawdowns2020(data):
-    return_series = pd.DataFrame(data.pct_change().dropna()['2020':])
+    return_series = pd.DataFrame(data.pct_change().dropna()[str(date.today().year):])
     wealth_index = 1000*(1+return_series).cumprod()
     previous_peaks = wealth_index.cummax()
     drawdowns = (wealth_index - previous_peaks)/previous_peaks
@@ -114,10 +114,10 @@ def data_sov():
 
 def data_corp():
     #Corporate Fixed Income ETFs -  IG & HY in Developed & EM
-    data_corp = yf.download('AGG ANGL BKLN BND BNDX CWB EMHY FALN FLOT FMB FPE HYEM HYG HYXE HYXU JNK LQD O9P.SI SHYG SRLN USIG VCIT VCLT VCSH', progress=False)['Adj Close']
+    data_corp = yf.download('AGG ANGL BKLN BND BNDX CWB EMHY FALN FLOT FMB FPE HYEM HYG HYXE HYXU JNK LQD SHYG SRLN USIG VCIT VCLT VCSH', progress=False)['Adj Close']
     tickers = data_corp.columns
     data_corp.dropna(inplace=True)
-    data_corp.columns = ["iShares Core U.S. Aggregate Bond ETF","VanEck Vectors Fallen Angel High Yield Bond ETF","Invesco Senior Loan ETF","Vanguard Total Bond Market ETF","Vanguard Total International Bond ETF","SPDR BBG Barclays Convertible Securities ETF","iShares EM High Yield Bond ETF","iShares Fallen Angels USD Bond ETF","iShares Floating Rate Bond ETF","First Trust Managed Municipal ETF","First Trust Preferred Securities & Income ETF","VanEck Emerging Markets High Yield Bond ETF","iShares USD High Yield Corporate Bond ETF","iShares USD High Yield ex Oil & Gas Corporate Bond ETF","iShares International High Yield Bond ETF","SPDR BBG Barclays High Yield Bond ETF","iShares USD IG Corporate Bond ETF","iShares USD Asia High Yield Bond Index ETF ","iShares 0-5 Year High Yield Corporate Bond ETF","SPDR Blackstone / GSO Senior Loan ETF","iShares Broad USD Investment Grade Bond ETF","Vanguard Intermediate-Term Corporate Bond ETF","Vanguard Long-Term Corporate Bond ETF","Vanguard Short-Term Corporate Bond ETF"]
+    data_corp.columns = ["iShares Core U.S. Aggregate Bond ETF","VanEck Vectors Fallen Angel High Yield Bond ETF","Invesco Senior Loan ETF","Vanguard Total Bond Market ETF","Vanguard Total International Bond ETF","SPDR BBG Barclays Convertible Securities ETF","iShares EM High Yield Bond ETF","iShares Fallen Angels USD Bond ETF","iShares Floating Rate Bond ETF","First Trust Managed Municipal ETF","First Trust Preferred Securities & Income ETF","VanEck Emerging Markets High Yield Bond ETF","iShares USD High Yield Corporate Bond ETF","iShares USD High Yield ex Oil & Gas Corporate Bond ETF","iShares International High Yield Bond ETF","SPDR BBG Barclays High Yield Bond ETF","iShares USD IG Corporate Bond ETF","iShares 0-5 Year High Yield Corporate Bond ETF","SPDR Blackstone / GSO Senior Loan ETF","iShares Broad USD Investment Grade Bond ETF","Vanguard Intermediate-Term Corporate Bond ETF","Vanguard Long-Term Corporate Bond ETF","Vanguard Short-Term Corporate Bond ETF"]
     return (data_corp, tickers)
 
 def data_reit(ticker='No'):
@@ -176,7 +176,8 @@ def data_equities():
 
 
     
-def heatmap(rets, title='Cross Asset ETFs Heatmap', figsize=(15,10), annot_size=12, n_rows=10, n_cols=8):
+def heatmap(rets, title='Cross Asset ETFs Heatmap', figsize=(15,10), annot_size=12, n_rows=10, n_cols=8, pct='Yes', mon=None):
+
     rets.columns = ['Return']
     rets = rets.sort_values('Return', ascending=False)
     symbols = (np.asarray(list(rets.index))).reshape(n_rows,n_cols)
@@ -190,8 +191,13 @@ def heatmap(rets, title='Cross Asset ETFs Heatmap', figsize=(15,10), annot_size=
     rets['Cols'] = cols
     
     result = rets.pivot(index = 'Rows', columns = 'Cols', values = 'Return')
-    labels = (np.asarray(["{0} \n {1:.2%}".format(symb,value)
+    if pct=='Yes':
+        labels = (np.asarray(["{0} \n {1:.2%} ".format(symb,value)
                      for symb, value in zip(symbols.flatten(), pct_rets.flatten())])).reshape(n_rows,n_cols)
+        
+    else:
+        labels = (np.asarray(["{0} \n {1:.2f} \n {2}".format(symb,value, mon)
+                     for symb, value, mon in zip(symbols.flatten(), pct_rets.flatten(), mon.flatten())])).reshape(n_rows,n_cols)
     fig, ax = plt.subplots(figsize=figsize)
     plt.title(title, fontsize=15)
     ttl = ax.title
